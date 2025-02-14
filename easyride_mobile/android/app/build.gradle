@@ -1,0 +1,61 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.example.eazyride_mobile"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "com.example.eazyride_mobile"
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+
+        // Inject API Key into BuildConfig
+        buildConfigField "String", "API_KEY", '"YOUR_API_KEY_HERE"'
+    }
+
+    buildTypes {
+        release {
+            // Signing with debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.debug
+        }
+    }
+
+    // Task to replace placeholder in values.xml with the actual API key
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def apiKey = BuildConfig.API_KEY
+            processResources {
+                doLast {
+                    // Path to the values.xml file where the API key placeholder is defined
+                    def valuesFile = file("src/main/res/values/values.xml")
+                    def content = valuesFile.text
+                    // Replace the placeholder with the actual API key
+                    content = content.replace("API_KEY_FROM_BUILD_CONFIG", apiKey)
+                    // Save the modified content back to the values.xml file
+                    valuesFile.text = content
+                }
+            }
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
