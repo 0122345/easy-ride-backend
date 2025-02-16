@@ -1,3 +1,4 @@
+import 'package:eazyride_mobile/auth/driver/search_client_ride.dart';
 import 'package:eazyride_mobile/components/drawer.dart';
 import 'package:eazyride_mobile/onboarding/entrance.dart';
 import 'package:flutter/material.dart';
@@ -5,18 +6,31 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
 Future<void> main() async {
-  Get.put(MyDrawerController());
-  await dotenv.load();
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  
+  await dotenv.load();
   RendererBinding.instance.mouseTracker.dispose();
-  //configureDependencies();
-  runApp(const MyApp());
+  
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<RideState>(
+          create: (_) => RideState(),
+        ),
+        Provider<MyDrawerController>(
+          create: (_) => Get.put(MyDrawerController()),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
+
   FlutterNativeSplash.remove();
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

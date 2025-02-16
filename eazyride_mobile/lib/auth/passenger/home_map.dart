@@ -2,7 +2,9 @@ import 'package:eazyride_mobile/auth/homepage.dart';
 import 'package:eazyride_mobile/components/drawer.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:eazyride_mobile/home/search_screen.dart';
+import 'package:eazyride_mobile/licence/privacy.dart';
 import 'package:eazyride_mobile/notifications/home.dart';
+import 'package:eazyride_mobile/settings/home.dart';
 import 'package:eazyride_mobile/transport/request/driver/ride_request.dart';
 import 'package:eazyride_mobile/transport/request/passenger/ride_request.dart';
 import 'package:eazyride_mobile/transport/ride/request_ride.dart';
@@ -15,6 +17,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:provider/provider.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
 
 class HomeWrapper extends StatelessWidget {
   const HomeWrapper({super.key});
@@ -40,147 +44,224 @@ class HomeWrapper extends StatelessWidget {
 
 class HomeMap extends StatefulWidget {
   const HomeMap({super.key});
-
-  @override
-  State<HomeMap> createState() => _HomeMapState();
-}
-
-class _HomeMapState extends State<HomeMap> {
-  int _selectedIndex = 0;
-  final List<IconData> _iconList = [
-    Icons.home,
-    Icons.favorite,
-    Icons.report,
-    Icons.local_offer,
-    Icons.person,
-  ];
-  final pageController = PageController(initialPage: 0);
-  final MyDrawerController controller = Get.find<MyDrawerController>();
-  GoogleMapController? mapController;
-  Position? _currentPosition;
-  StreamSubscription<Position>? _positionStream;
-  final Set<Marker> _markers = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _initLocationServices();
+    @override
+    State<HomeMap> createState() => _HomeMapState();
   }
 
-  Future<void> _initLocationServices() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
+  class _HomeMapState extends State<HomeMap> {
+    int _selectedIndex = 0;
+    final List<IconData> _iconList = [
+      Icons.home,
+      Icons.favorite,
+      Icons.report,
+      Icons.local_offer,
+      Icons.person,
+    ];
+    final pageController = PageController(initialPage: 0);
+    final MyDrawerController controller = Get.find<MyDrawerController>();
+    GoogleMapController? mapController;
+    Position? _currentPosition;
+    StreamSubscription<Position>? _positionStream;
+    final Set<Marker> _markers = {};
+    final Set<Marker> _driverMarkers = {};
+    WebSocketChannel? _webSocket;
+    Timer? _locationUpdateTimer;
+    final double _nearbyRadius = 100; // 100 meters
+
+    @override
+    void initState() {
+      super.initState();
+      _initLocationServices();
+      _initWebSocket();
+      _startLocationUpdates();
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+    Future<void> _initLocationServices() async {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return Future.error('Location services are disabled.');
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return Future.error('Location permissions are denied');
+        }
+      }
+
+      _currentPosition = await Geolocator.getCurrentPosition();
+      _updateMarkerAndCamera();
+
+      _positionStream = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 5,
+        ),
+      ).listen((Position position) {
+        setState(() {
+          _currentPosition = position;
+          _updateMarkerAndCamera();
+          _sendLocationToServer(position);
+        });
+      });
+    }
+
+    void _initWebSocket() {
+      _webSocket = WebSocketChannel.connect(
+        Uri.parse('ws://easy-ride-backend-xl8m.onrender.com/api/ws'),
+      );
+    
+      _webSocket!.stream.listen((message) {
+        final data = jsonDecode(message);
+        _updateDriverMarkers(data);
+      });
+    }
+
+    void _startLocationUpdates() {
+      _locationUpdateTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+        if (_currentPosition != null) {
+          _sendLocationToServer(_currentPosition!);
+          _fetchNearbyDrivers();
+        }
+      });
+    }
+
+    void _updateMarkerAndCamera() {
+      if (_currentPosition != null) {
+        LatLng latLng =
+            LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+        setState(() {
+          _markers.clear();
+          _markers.add(
+            Marker(
+              markerId: const MarkerId('current_location'),
+              position: latLng,
+              icon:
+                  BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+              infoWindow: const InfoWindow(title: 'Current Location'),
+            ),
+          );
+        });
+
+        mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: latLng, zoom: 16.0),
+          ),
+        );
       }
     }
 
-    _currentPosition = await Geolocator.getCurrentPosition();
-    _updateMarkerAndCamera();
+    Future<void> _sendLocationToServer(Position position) async {
+      try {
+        final response = await http.post(
+          Uri.parse('https://easy-ride-backend-xl8m.onrender.com/api/location/update'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+            'userType': 'passenger',
+            'userId': 'PASSENGER_ID', // Replace with actual passenger ID
+            'timestamp': DateTime.now().toIso8601String(),
+          }),
+        );
+      } catch (e) {
+        print('Error sending location: $e');
+      }
+    }
 
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-      ),
-    ).listen((Position position) {
-      setState(() {
-        _currentPosition = position;
-        _updateMarkerAndCamera();
-        _sendLocationToServer(position);
-      });
-    });
-  }
-
-  void _updateMarkerAndCamera() {
-    if (_currentPosition != null) {
-      LatLng latLng =
-          LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
-      setState(() {
-        _markers.clear();
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('current_location'),
-            position: latLng,
-            icon:
-                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            infoWindow: const InfoWindow(title: 'Current Location'),
+    Future<void> _fetchNearbyDrivers() async {
+      try {
+        final response = await http.get(
+          Uri.parse(
+            'https://easy-ride-backend-xl8m.onrender.com/api/api/drivers/nearby?lat=${_currentPosition!.latitude}&lng=${_currentPosition!.longitude}&radius=$_nearbyRadius'
           ),
         );
-      });
 
-      mapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: latLng, zoom: 16.0),
+        if (response.statusCode == 200) {
+          final List<dynamic> drivers = jsonDecode(response.body);
+          _updateDriverMarkers(drivers);
+        }
+      } catch (e) {
+        print('Error fetching nearby drivers: $e');
+      }
+    }
+
+    void _updateDriverMarkers(List<dynamic> drivers) {
+      setState(() {
+        _driverMarkers.clear();
+      
+        // Add passenger marker
+        if (_currentPosition != null) {
+          _driverMarkers.add(
+            Marker(
+              markerId: const MarkerId('passenger'),
+              position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+              icon: BitmapDescriptor.defaultMarker,
+              infoWindow: const InfoWindow(title: 'You'),
+            ),
+          );
+        }
+
+        // Add driver markers
+        for (var driver in drivers) {
+          _driverMarkers.add(
+            Marker(
+              markerId: MarkerId('driver_${driver['id']}'),
+              position: LatLng(
+                driver['latitude'],
+                driver['longitude'],
+              ),
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+              infoWindow: InfoWindow(
+                title: 'Driver ${driver['name']}',
+                snippet: 'Rating: ${driver['rating']}',
+              ),
+            ),
+          );
+        }
+      });
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        body: Stack(
+          children: [
+            GoogleMap(
+              onMapCreated: (GoogleMapController controller) {
+                mapController = controller;
+              },
+              initialCameraPosition: CameraPosition(
+                target: _currentPosition != null
+                    ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
+                    : const LatLng(-1.9441, 30.0444),
+                zoom: 15,
+              ),
+              markers: _driverMarkers, // Use the combined markers set
+              myLocationEnabled: true,
+              myLocationButtonEnabled: true,
+              compassEnabled: true,
+              mapType: MapType.normal,
+              zoomControlsEnabled: true,
+            ),
+            Column(
+              children: [
+                _buildTopBar(context),
+                const Spacer(),
+                _buildBottomBar(context),
+              ],
+            ),
+          ],
         ),
       );
     }
-  }
 
-  Future<void> _sendLocationToServer(Position position) async {
-    try {
-      final response = await http.post(
-        Uri.parse('_SERVER_ENDPOINT'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'userType': 'passenger',
-          'timestamp': DateTime.now().toIso8601String(),
-          'userId': 'USER_ID',
-        }),
-      );
-    } catch (e) {
-      print('Error sending location data: $e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          GoogleMap(
-            onMapCreated: (GoogleMapController controller) {
-              mapController = controller;
-            },
-            initialCameraPosition: CameraPosition(
-              target: _currentPosition != null
-                  ? LatLng(
-                      _currentPosition!.latitude, _currentPosition!.longitude)
-                  : const LatLng(-1.9441, 30.0444),
-              zoom: 15,
-            ),
-            markers: _markers,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-            compassEnabled: true,
-            mapType: MapType.normal,
-            zoomControlsEnabled: true,
-          ),
-          Column(
-            children: [
-              _buildTopBar(context),
-              const Spacer(),
-              _buildBottomBar(context),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopBar(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Row(
+    Widget _buildTopBar(BuildContext context) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
@@ -344,6 +425,31 @@ class _HomeMapState extends State<HomeMap> {
     );
   }
 
+  
+  void _handleLocationSelect(Map<String, dynamic> location) {
+    Get.snackbar(
+      'Success',
+      'Location selected: ${location['name']}',
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
+  }
+  
+  void _handleNavigation(int index) {
+     final routes = [
+       MaterialPageRoute(builder: (_) => const HomeMap()),
+       MaterialPageRoute(builder: (_) => const Homepage()),
+       MaterialPageRoute(builder: (_) =>  PrivacyPolicyScreen()),
+       MaterialPageRoute(builder: (_) => const HomeNotifications()),
+       MaterialPageRoute(builder: (_) => const HomeSettings()),
+     ];
+
+     if (index >= 0 && index < routes.length) {
+        setState(() => _selectedIndex = index);
+        Navigator.push(context, routes[index]);
+     }
+  }
+
   Widget _buildNavigationBar() {
     return AnimatedBottomNavigationBar(
       icons: _iconList,
@@ -352,18 +458,7 @@ class _HomeMapState extends State<HomeMap> {
       notchSmoothness: NotchSmoothness.verySmoothEdge,
       leftCornerRadius: 32,
       rightCornerRadius: 0,
-      onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
-        
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => _screens[index], // Push the selected screen
-        //   ),
-        // );
-      },
+      onTap: _handleNavigation,
       activeColor: Colors.amber,
       inactiveColor: Colors.grey,
       backgroundColor: const Color.fromARGB(255, 148, 93, 93),
@@ -375,7 +470,10 @@ class _HomeMapState extends State<HomeMap> {
   void dispose() {
     pageController.dispose();
     _positionStream?.cancel();
+    _webSocket?.sink.close();
+    _locationUpdateTimer?.cancel();
     mapController?.dispose();
     super.dispose();
   }
 }
+

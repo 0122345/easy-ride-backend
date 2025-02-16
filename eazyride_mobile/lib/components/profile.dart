@@ -1,475 +1,441 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'dart:io';
+// import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:dio/dio.dart';
+// import 'dart:convert';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:get/get.dart';
 
-class ProfileEditScreen extends StatefulWidget {
-  const ProfileEditScreen({Key? key}) : super(key: key);
+// class LocationService extends GetxService {
+//   final dio = Dio(BaseOptions(
+//     baseUrl: 'https://rwanda.p.rapidapi.com',
+//     headers: {
+//       'X-Rapidapi-Key': 'ac2265e187mshd163bb0862bbe12p197842jsn4766338cf8d3',
+//       'X-Rapidapi-Host': 'rwanda.p.rapidapi.com',
+//     },
+//   ));
 
-  @override
-  State<ProfileEditScreen> createState() => _ProfileEditScreenState();
-}
+//   Future<List<String>> getProvinces() async {
+//     try {
+//       final response = await dio.get('/provinces');
+//       return List<String>.from(response.data['provinces']);
+//     } catch (e) {
+//       return [];
+//     }
+//   }
 
-class _ProfileEditScreenState extends State<ProfileEditScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final ImagePicker _picker = ImagePicker();
-  File? _imageFile;
-  bool _isLoading = false;
+//   Future<List<String>> getDistricts(String province) async {
+//     try {
+//       final response = await dio.get('/districts', queryParameters: {'province': province});
+//       return List<String>.from(response.data['districts']);
+//     } catch (e) {
+//       return [];
+//     }
+//   }
+
+//   Future<List<String>> getCities(String district) async {
+//     try {
+//       final response = await dio.get('/cities', queryParameters: {'district': district});
+//       return List<String>.from(response.data['cities']);
+//     } catch (e) {
+//       return [];
+//     }
+//   }
+// }
+
+// class ImageService extends GetxService {
+//   final ImagePicker _picker = ImagePicker();
+
+//   Future<File?> pickImage(BuildContext context) async {
+//     final result = await showModalBottomSheet<ImageSource>(
+//       context: context,
+//       builder: (BuildContext context) => SafeArea(
+//         child: Wrap(
+//           children: [
+//             ListTile(
+//               leading: const Icon(Icons.photo_camera),
+//               title: const Text('Take a photo'),
+//               onTap: () => Navigator.pop(context, ImageSource.camera),
+//             ),
+//             ListTile(
+//               leading: const Icon(Icons.photo_library),
+//               title: const Text('Choose from gallery'),
+//               onTap: () => Navigator.pop(context, ImageSource.gallery),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+
+//     if (result != null) {
+//       final XFile? image = await _picker.pickImage(
+//         source: result,
+//         imageQuality: 80,
+//         maxWidth: 1000,
+//       );
+//       return image != null ? File(image.path) : null;
+//     }
+//     return null;
+//   }
+// }
+
+// class ProfileEditScreen extends StatefulWidget {
+//   const ProfileEditScreen({Key? key}) : super(key: key);
+
+//   @override
+//   State<ProfileEditScreen> createState() => _ProfileEditScreenState();
+// }
+
+// class _ProfileEditScreenState extends State<ProfileEditScreen> {
+//   final _formKey = GlobalKey<FormState>();
+//   final _locationService = Get.put(LocationService());
+//   final _imageService = Get.put(ImageService());
+//   File? _imageFile;
+//   bool _isLoading = false;
   
-  // Form controllers
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _streetController = TextEditingController();
+//   final TextEditingController _nameController = TextEditingController();
+//   final TextEditingController _phoneController = TextEditingController();
+//   final TextEditingController _streetController = TextEditingController();
   
-  // Dropdown values
-  String? _selectedProvince;
-  String? _selectedDistrict;
-  String? _selectedCity;
+//   String? _selectedProvince;
+//   String? _selectedDistrict;
+//   String? _selectedCity;
   
-  // Dropdown items
-  List<String> _provinces = [];
-  List<String> _districts = [];
-  List<String> _cities = [];
+//   List<String> _provinces = [];
+//   List<String> _districts = [];
+//   List<String> _cities = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-    _fetchProvinces();
-  }
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserData();
+//     _fetchProvinces();
+//   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _streetController.dispose();
-    super.dispose();
-  }
+//   @override
+//   void dispose() {
+//     _nameController.dispose();
+//     _phoneController.dispose();
+//     _streetController.dispose();
+//     super.dispose();
+//   }
 
-  // Load existing user data
-  Future<void> _loadUserData() async {
-    setState(() => _isLoading = true);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        _nameController.text = prefs.getString('userName') ?? '';
-        _phoneController.text = prefs.getString('userPhone') ?? '';
-        _selectedProvince = prefs.getString('userProvince');
-        _selectedDistrict = prefs.getString('userDistrict');
-        _selectedCity = prefs.getString('userCity');
-        _streetController.text = prefs.getString('userStreet') ?? '';
-      });
-    } catch (e) {
-      _showError('Error loading user data');
-    }
-    setState(() => _isLoading = false);
-  }
+//   Future<void> _loadUserData() async {
+//     setState(() => _isLoading = true);
+//     try {
+//       final prefs = await SharedPreferences.getInstance();
+//       setState(() {
+//         _nameController.text = prefs.getString('userName') ?? '';
+//         _phoneController.text = prefs.getString('userPhone') ?? '';
+//         _selectedProvince = prefs.getString('userProvince');
+//         _selectedDistrict = prefs.getString('userDistrict');
+//         _selectedCity = prefs.getString('userCity');
+//         _streetController.text = prefs.getString('userStreet') ?? '';
+//       });
+//       if (_selectedProvince != null) await _fetchDistricts(_selectedProvince!);
+//       if (_selectedDistrict != null) await _fetchCities(_selectedDistrict!);
+//     } catch (e) {
+//       _showError('Error loading user data');
+//     }
+//     setState(() => _isLoading = false);
+//   }
 
-  // Fetch provinces from API
-  Future<void> _fetchProvinces() async {
-    try {
-       final response = await http.get(
-      Uri.parse('https://rwanda.p.rapidapi.com/provinces'),
-      headers: {
-        'X-Rapidapi-Key': 'ac2265e187mshd163bb0862bbe12p197842jsn4766338cf8d3',
-        'X-Rapidapi-Host': 'rwanda.p.rapidapi.com',
-        'Host': 'rwanda.p.rapidapi.com',
-      },
-    );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _provinces = List<String>.from(data['provinces']);
-        });
-      }
-    } catch (e) {
-      _showError('Error fetching provinces');
-    }
-  }
+//   Future<void> _fetchProvinces() async {
+//     try {
+//       final provinces = await _locationService.getProvinces();
+//       setState(() => _provinces = provinces);
+//     } catch (e) {
+//       _showError('Error fetching provinces');
+//     }
+//   }
 
-  // Fetch districts based on selected province
-  Future<void> _fetchDistricts(String province) async {
-    try {
-      final response = await http.get(
-      Uri.parse('https://rwanda.p.rapidapi.com/districts?province=$province'),
-      headers: {
-        'X-Rapidapi-Key': 'ac2265e187mshd163bb0862bbe12p197842jsn4766338cf8d3',
-        'X-Rapidapi-Host': 'rwanda.p.rapidapi.com',
-        'Host': 'rwanda.p.rapidapi.com',
-      },
-    );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _districts = List<String>.from(data['districts']);
-          _selectedDistrict = null;
-          _selectedCity = null;
-        });
-      }
-    } catch (e) {
-      _showError('Error fetching districts');
-    }
-  }
+//   Future<void> _fetchDistricts(String province) async {
+//     try {
+//       final districts = await _locationService.getDistricts(province);
+//       setState(() {
+//         _districts = districts;
+//         _selectedDistrict = null;
+//         _selectedCity = null;
+//         _cities = [];
+//       });
+//     } catch (e) {
+//       _showError('Error fetching districts');
+//     }
+//   }
 
-  Future<void> _fetchCities(String district) async {
-  try {
-    final response = await http.get(
-      Uri.parse('https://rwanda.p.rapidapi.com/cities?district=$district'),
-      headers: {
-        'X-Rapidapi-Key': 'ac2265e187mshd163bb0862bbe12p197842jsn4766338cf8d3',
-        'X-Rapidapi-Host': 'rwanda.p.rapidapi.com',
-        'Host': 'rwanda.p.rapidapi.com',
-      },
-    );
+//   Future<void> _fetchCities(String district) async {
+//     try {
+//       final cities = await _locationService.getCities(district);
+//       setState(() {
+//         _cities = cities;
+//         _selectedCity = null;
+//       });
+//     } catch (e) {
+//       _showError('Error fetching cities');
+//     }
+//   }
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        _cities = List<String>.from(data['cities']);
-        _selectedCity = null;
-      });
-    } else {
-      _showError('Error fetching cities: ${response.statusCode}');
-    }
-  } catch (e) {
-    _showError('Error fetching cities: $e');
-  }
-}
+//   Future<void> _handleImageSelection() async {
+//     final File? selectedImage = await _imageService.pickImage(context);
+//     if (selectedImage != null) {
+//       setState(() => _imageFile = selectedImage);
+//     }
+//   }
 
-  // Pick image from gallery or camera
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      _showError('Error picking image');
-    }
-  }
+// Future<void> _saveProfile() async {
+//   if (!_formKey.currentState!.validate()) return;
 
-  // Show image source selection dialog
-  Future<void> _showImageSourceDialog() async {
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Image Source'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+//   setState(() => _isLoading = true);
 
-  // Save profile data
-  Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+//   try {
+//     final dio = Dio();
+//     final formData = FormData.fromMap({
+//       'name': _nameController.text,
+//       'phone': _phoneController.text,
+//       'province': _selectedProvince ?? '',
+//       'district': _selectedDistrict ?? '',
+//       'city': _selectedCity ?? '',
+//       'street': _streetController.text,
+//     });
 
-    setState(() => _isLoading = true);
-    try {
-      // Create multipart request
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('YOUR_API_URL/update-profile'),
-      );
+ 
+//     if (_imageFile != null) {
+//       formData.files.add(
+//         MapEntry(
+//           'profile_image',
+//           await MultipartFile.fromFile(_imageFile!.path),
+//         ),
+//       );
+//     }
 
-      // Add image if selected
-      if (_imageFile != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'profile_image',
-            _imageFile!.path,
-          ),
-        );
-      }
+//     // Make the POST request
+//     final response = await dio.post(
+//       'https://easy-ride-backend-xl8m.onrender.com/api/update-profile',
+//       data: formData,
+//     );
 
-      // Add form fields
-      request.fields.addAll({
-        'name': _nameController.text,
-        'phone': _phoneController.text,
-        'province': _selectedProvince ?? '',
-        'district': _selectedDistrict ?? '',
-        'city': _selectedCity ?? '',
-        'street': _streetController.text,
-      });
+//     // Handle the response
+//     if (response.statusCode == 200) {
+//       final prefs = await SharedPreferences.getInstance();
 
-      // Send request
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        // Save to local storage
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userName', _nameController.text);
-        await prefs.setString('userPhone', _phoneController.text);
-        await prefs.setString('userProvince', _selectedProvince ?? '');
-        await prefs.setString('userDistrict', _selectedDistrict ?? '');
-        await prefs.setString('userCity', _selectedCity ?? '');
-        await prefs.setString('userStreet', _streetController.text);
+//       // Save user profile data to shared preferences
+//       await prefs.setString('userName', _nameController.text);
+//       await prefs.setString('userPhone', _phoneController.text);
+//       await prefs.setString('userProvince', _selectedProvince ?? '');
+//       await prefs.setString('userDistrict', _selectedDistrict ?? '');
+//       await prefs.setString('userCity', _selectedCity ?? '');
+//       await prefs.setString('userStreet', _streetController.text);
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully')),
-          );
-        }
-      } else {
-        throw Exception('Failed to update profile');
-      }
-    } catch (e) {
-      _showError('Error updating profile');
-    }
-    setState(() => _isLoading = false);
-  }
+//       if (mounted) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(content: Text('Profile updated successfully')),
+//         );
+//       }
+//     } else {
+       
+//       _showError('Failed to update profile: ${response.statusCode}');
+//     }
+//   } catch (e) {
+     
+//     print('Error during profile update: $e');
+//     _showError('Error updating profile');
+//   } finally {
+//     if (mounted) {
+//       setState(() => _isLoading = false);
+//     }
+//   }
+// }
 
-  void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
+// void _showError(String message) {
+//   if (!mounted) return;
+//   ScaffoldMessenger.of(context).showSnackBar(
+//     SnackBar(content: Text(message)),
+//   );
+// }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Profile'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // Profile Image
-                    GestureDetector(
-                      onTap: _showImageSourceDialog,
-                      child: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundImage: _imageFile != null
-                                ? FileImage(_imageFile!)
-                                : null,
-                            child: _imageFile == null
-                                ? const Icon(Icons.person, size: 50)
-                                : null,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.amber,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.camera_alt, size: 20),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
 
-                    // Name Field
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         leading: IconButton(
+//           icon: const Icon(Icons.arrow_back),
+//           onPressed: () => Navigator.pop(context),
+//         ),
+//         title: const Text('Profile'),
+//         backgroundColor: Colors.white,
+//         foregroundColor: Colors.black,
+//         elevation: 0,
+//       ),
+//       body: _isLoading
+//           ? const Center(child: CircularProgressIndicator())
+//           : SingleChildScrollView(
+//               padding: const EdgeInsets.all(16),
+//               child: Form(
+//                 key: _formKey,
+//                 child: Column(
+//                   children: [
+//                     GestureDetector(
+//                       onTap: _handleImageSelection,
+//                       child: Stack(
+//                         alignment: Alignment.bottomRight,
+//                         children: [
+//                           CircleAvatar(
+//                             radius: 50,
+//                             backgroundImage: _imageFile != null
+//                                 ? FileImage(_imageFile!)
+//                                 : null,
+//                             child: _imageFile == null
+//                                 ? const Icon(Icons.person, size: 50)
+//                                 : null,
+//                           ),
+//                           Container(
+//                             padding: const EdgeInsets.all(4),
+//                             decoration: const BoxDecoration(
+//                               color: Colors.amber,
+//                               shape: BoxShape.circle,
+//                             ),
+//                             child: const Icon(Icons.camera_alt, size: 20),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                     const SizedBox(height: 24),
 
-                    // Phone Field
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: InputDecoration(
-                        labelText: 'Your mobile number',
-                        border: const OutlineInputBorder(),
-                        prefixIcon: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Image.asset('assets/flag.png', width: 24),
-                              const Text(' +250'),
-                            ],
-                          ),
-                        ),
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+//                     TextFormField(
+//                       controller: _nameController,
+//                       decoration: const InputDecoration(
+//                         labelText: 'Full Name',
+//                         border: OutlineInputBorder(),
+//                       ),
+//                       validator: (value) =>
+//                           value?.isEmpty ?? true ? 'Please enter your name' : null,
+//                     ),
+//                     const SizedBox(height: 16),
 
-                    // Province Dropdown
-                    DropdownButtonFormField<String>(
-                      value: _selectedProvince,
-                      decoration: const InputDecoration(
-                        labelText: 'Province',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _provinces.map((String province) {
-                        return DropdownMenuItem(
-                          value: province,
-                          child: Text(province),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedProvince = value;
-                        });
-                        if (value != null) {
-                          _fetchDistricts(value);
-                        }
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select a province';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+//                     TextFormField(
+//                       controller: _phoneController,
+//                       decoration: InputDecoration(
+//                         labelText: 'Your mobile number',
+//                         border: const OutlineInputBorder(),
+//                         prefixIcon: Container(
+//                           padding: const EdgeInsets.symmetric(horizontal: 8),
+//                           child: Row(
+//                             mainAxisSize: MainAxisSize.min,
+//                             children: [
+//                               Image.asset('assets/flag.png', width: 24),
+//                               const Text(' +250'),
+//                             ],
+//                           ),
+//                         ),
+//                       ),
+//                       keyboardType: TextInputType.phone,
+//                       validator: (value) =>
+//                           value?.isEmpty ?? true ? 'Please enter your phone number' : null,
+//                     ),
+//                     const SizedBox(height: 16),
 
-                    // District Dropdown
-                    DropdownButtonFormField<String>(
-                      value: _selectedDistrict,
-                      decoration: const InputDecoration(
-                        labelText: 'District',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _districts.map((String district) {
-                        return DropdownMenuItem(
-                          value: district,
-                          child: Text(district),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedDistrict = value;
-                        });
-                        if (value != null) {
-                          _fetchCities(value);
-                        }
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select a district';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+//                     DropdownButtonFormField<String>(
+//                       value: _selectedProvince,
+//                       decoration: const InputDecoration(
+//                         labelText: 'Province',
+//                         border: OutlineInputBorder(),
+//                       ),
+//                       items: _provinces.map((String province) {
+//                         return DropdownMenuItem(
+//                           value: province,
+//                           child: Text(province),
+//                         );
+//                       }).toList(),
+//                       onChanged: (String? value) {
+//                         if (value != null) {
+//                           setState(() => _selectedProvince = value);
+//                           _fetchDistricts(value);
+//                         }
+//                       },
+//                       validator: (value) =>
+//                           value == null ? 'Please select a province' : null,
+//                     ),
+//                     const SizedBox(height: 16),
 
-                    // City Dropdown
-                    DropdownButtonFormField<String>(
-                      value: _selectedCity,
-                      decoration: const InputDecoration(
-                        labelText: 'City',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _cities.map((String city) {
-                        return DropdownMenuItem(
-                          value: city,
-                          child: Text(city),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedCity = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select a city';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+//                     DropdownButtonFormField<String>(
+//                       value: _selectedDistrict,
+//                       decoration: const InputDecoration(
+//                         labelText: 'District',
+//                         border: OutlineInputBorder(),
+//                       ),
+//                       items: _districts.map((String district) {
+//                         return DropdownMenuItem(
+//                           value: district,
+//                           child: Text(district),
+//                         );
+//                       }).toList(),
+//                       onChanged: (String? value) {
+//                         if (value != null) {
+//                           setState(() => _selectedDistrict = value);
+//                           _fetchCities(value);
+//                         }
+//                       },
+//                       validator: (value) =>
+//                           value == null ? 'Please select a district' : null,
+//                     ),
+//                     const SizedBox(height: 16),
 
-                    // Street Field
-                    TextFormField(
-                      controller: _streetController,
-                      decoration: const InputDecoration(
-                        labelText: 'Street',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your street';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
+//                     DropdownButtonFormField<String>(
+//                       value: _selectedCity,
+//                       decoration: const InputDecoration(
+//                         labelText: 'City',
+//                         border: OutlineInputBorder(),
+//                       ),
+//                       items: _cities.map((String city) {
+//                         return DropdownMenuItem(
+//                           value: city,
+//                           child: Text(city),
+//                         );
+//                       }).toList(),
+//                       onChanged: (String? value) {
+//                         setState(() => _selectedCity = value);
+//                       },
+//                       validator: (value) =>
+//                           value == null ? 'Please select a city' : null,
+//                     ),
+//                     const SizedBox(height: 16),
 
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _saveProfile,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amber,
-                            ),
-                            child: const Text('Save'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-    );
-  }
-}
+//                     TextFormField(
+//                       controller: _streetController,
+//                       decoration: const InputDecoration(
+//                         labelText: 'Street',
+//                         border: OutlineInputBorder(),
+//                       ),
+//                       validator: (value) =>
+//                           value?.isEmpty ?? true ? 'Please enter your street' : null,
+//                     ),
+//                     const SizedBox(height: 24),
+
+//                     Row(
+//                       children: [
+//                         Expanded(
+//                           child: OutlinedButton(
+//                             onPressed: () => Navigator.pop(context),
+//                             child: const Text('Cancel'),
+//                           ),
+//                         ),
+//                         const SizedBox(width: 16),
+//                         Expanded(
+//                           child: ElevatedButton(
+//                             onPressed: _saveProfile,
+//                             style: ElevatedButton.styleFrom(
+//                               backgroundColor: Colors.amber,
+//                             ),
+//                             child: const Text('Save'),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//     );
+//   }
+// }

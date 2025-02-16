@@ -27,7 +27,7 @@ class _SignUpState extends State<SignUp> {
   void initState() {
     super.initState();
     selectedCountry = null;
-    dio.options.baseUrl = 'http://localhost:300/api';  
+    dio.options.baseUrl = 'https://easy-ride-backend-xl8m.onrender.com/api/api/auth/customer/register';  
   }
 
   @override
@@ -59,7 +59,7 @@ class _SignUpState extends State<SignUp> {
         'userType': 'DRIVER'
       };
 
-      final response = await dio.post('/auth/signup', data: driverData);
+      final response = await dio.post('https://easy-ride-backend-xl8m.onrender.com/api/auth/customer/register', data: driverData);
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (mounted) {

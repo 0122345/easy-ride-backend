@@ -1,4 +1,5 @@
 import 'package:eazyride_mobile/auth/driver/signup.dart';
+import 'package:eazyride_mobile/auth/homepage.dart';
 import 'package:eazyride_mobile/auth/passenger/login.dart';
 import 'package:eazyride_mobile/transport/request/driver/ride_request.dart';
 import 'package:eazyride_mobile/transport/request/passenger/ride_request.dart';
@@ -88,14 +89,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       });
                       _saveUserRole(true);
                       Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => RideRequestScreen()));
+                          MaterialPageRoute(builder: (context) => Homepage()));
                     } else if (details.primaryDelta! < -10) {
                       setState(() {
                         isDriver = false;
                         isCustomer = true;
                       });
                          Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => RideRequestP()));
+                          MaterialPageRoute(builder: (context) => Homepage()));
                       _saveUserRole(true);
                     }
                   },

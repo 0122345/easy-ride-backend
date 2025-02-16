@@ -1,5 +1,5 @@
 //import 'package:eazyride_mobile/components/auth/change_password.dart';
-import 'package:eazyride_mobile/components/profile.dart';
+//import 'package:eazyride_mobile/components/profile.dart';
 import 'package:eazyride_mobile/history/activity.dart';
 import 'package:eazyride_mobile/history/home.dart';
 import 'package:eazyride_mobile/licence/privacy.dart';
@@ -136,12 +136,12 @@ class MenuScreen extends GetView<MyDrawerController> {
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfileEditScreen(),
-                      ),
-                    );
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (context) => const ProfileEditScreen(),
+                    //   ),
+                    // );
                   },
                   child: const Row(
                     children: [

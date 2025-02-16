@@ -17,7 +17,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final apiUrl = const String.fromEnvironment('API_URL',
-    defaultValue: 'https://easy-ride-backend-xl8m.onrender.com/api');
+    defaultValue: 'https://easy-ride-backend-xl8m.onrender.com/api/auth/customer/login');
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   Country? selectedCountry;

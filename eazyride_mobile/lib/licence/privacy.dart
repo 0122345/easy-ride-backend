@@ -1,4 +1,6 @@
+//import 'package:eazyride_mobile/auth/homepage.dart';
 import 'package:eazyride_mobile/auth/homepage.dart';
+//import 'package:eazyride_mobile/auth/passenger/home_map.dart';
 import 'package:eazyride_mobile/theme/hex_color.dart';
 import 'package:flutter/material.dart';
  
@@ -144,10 +146,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       SizedBox(width: 20),
                   
                       Container(
-                        width: 50,
-                        height: 30,
+                        width: 60,
+                        height: 40,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(13),
                           color: HexColor("#EDAE10"),
                           border: Border.all(
                             color: HexColor("#FFFFFF"),
