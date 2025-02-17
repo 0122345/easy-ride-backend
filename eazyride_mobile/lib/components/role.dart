@@ -1,6 +1,6 @@
 import 'package:eazyride_mobile/auth/driver/signup.dart';
-import 'package:eazyride_mobile/auth/homepage.dart';
-import 'package:eazyride_mobile/auth/passenger/login.dart';
+import 'package:eazyride_mobile/auth/driver/signup.dart';
+import 'package:eazyride_mobile/auth/passenger/sign_up_pas.dart';
 import 'package:eazyride_mobile/transport/request/driver/ride_request.dart';
 import 'package:eazyride_mobile/transport/request/passenger/ride_request.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
@@ -89,14 +89,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       });
                       _saveUserRole(true);
                       Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => Homepage()));
+                          MaterialPageRoute(builder: (context) => SignUp()));
                     } else if (details.primaryDelta! < -10) {
                       setState(() {
                         isDriver = false;
                         isCustomer = true;
                       });
                          Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => Homepage()));
+                          MaterialPageRoute(builder: (context) => SignUpPassenger()));
                       _saveUserRole(true);
                     }
                   },

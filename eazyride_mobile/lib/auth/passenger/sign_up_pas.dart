@@ -4,15 +4,17 @@ import 'package:country_picker/country_picker.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:dio/dio.dart';
 import 'package:eazyride_mobile/theme/hex_color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SignUp extends StatefulWidget {
-  const SignUp({super.key});
+class SignUpPassenger extends StatefulWidget {
+  const SignUpPassenger({super.key});
 
   @override
-  State<SignUp> createState() => _SignUpState();
+  State<SignUpPassenger> createState() => _SignUpPassengerState();
 }
 
-class _SignUpState extends State<SignUp> {
+class _SignUpPassengerState extends State<SignUpPassenger> {
+  static const String TOKEN_KEY = 'auth_token';
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   Country? selectedCountry;
@@ -21,15 +23,34 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _licenceController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
+
+  Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(TOKEN_KEY, token);
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(TOKEN_KEY);
+  }
 
   @override
   void initState() {
     super.initState();
     selectedCountry = null;
-    dio.options.baseUrl =
-        'https://easy-ride-backend-xl8m.onrender.com/api/api/auth/customer/register';
+    dio.options.baseUrl = 'https://easy-ride-backend-xl8m.onrender.com/api';
+    
+    // Add token interceptor
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await getToken();
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+        return handler.next(options);
+      },
+    ));
   }
 
   @override
@@ -37,12 +58,11 @@ class _SignUpState extends State<SignUp> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _licenceController.dispose();
     _genderController.dispose();
     super.dispose();
   }
- 
- Future<void> _handleSignUp() async {
+
+  Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedCountry == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -54,27 +74,28 @@ class _SignUpState extends State<SignUp> {
     setState(() => _isLoading = true);
 
     try {
-      final driverData = {
+      final customerData = {
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
         'phone': '${selectedCountry!.phoneCode}${_phoneController.text.trim()}',
         'gender': _genderController.text,
-        'licenceNumber': _licenceController.text,
-        'userType': 'DRIVER'
+        'userType': 'Passenger'
       };
 
-          
-         
-      final response = await dio.post('https://easy-ride-backend-xl8m.onrender.com/api/auth/driver/register', data: driverData);
+      final response = await dio.post('/auth/customer/register', data: customerData);
 
       if (response.statusCode == 201 || response.statusCode == 200) {
+        final token = response.data['token'];
+        await saveToken(token);
+
         if (mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => OtpPage(
                 userId: response.data['userId'],
-                email: driverData['email'], token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQxZWMyMTFhLWUwMzktNGZhZi05OTFkLTY2N2RlZTA1MGQzNSIsInVzZXJUeXBlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3Mzk1MTc3NzEsImV4cCI6MTc0MjEwOTc3MX0.a3JyMcbOdg1TBAivhVJFO9P8yFt8z_QRpMKEUHPNudw @driverToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4YWU5ODM3LTFkMGYtNDAyNC1iMzczLWJjYTNjYTY0NzZhZSIsInVzZXJUeXBlIjoiRFJJVkVSIiwiaWF0IjoxNzM5NTE3Nzk5LCJleHAiOjE3NDIxMDk3OTl9.23rYk_ry_e_WIKhwSy4QW496sDJB_5wYe2Q_24iAfDQ",
+                email: customerData['email'],
+                token: token,
               ),
             ),
           );
@@ -83,13 +104,14 @@ class _SignUpState extends State<SignUp> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text('Authentication failed: ${e.toString()}')),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +132,6 @@ class _SignUpState extends State<SignUp> {
                 _buildEmailField(),
                 const SizedBox(height: 16),
                 _buildPhoneField(),
-                const SizedBox(height: 16),
-                _buildLicenceField(),
                 const SizedBox(height: 16),
                 _buildGenderField(),
                 const SizedBox(height: 32),
@@ -161,26 +181,6 @@ class _SignUpState extends State<SignUp> {
         }
         if (value.trim().length < 2) {
           return 'Name must be at least 2 characters';
-         }
-        return null;
-      },
-     //TODO: _nameDecorator.clear();
-    );
-  }
-
-   Widget  _buildLicenceField() {
-    return TextFormField(
-      controller: _nameController,
-      decoration: InputDecoration(
-        labelText: 'Licence Plate number',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Licence is essential';
-        }
-        if (value.trim().length < 2) {
-          return 'Licence number must be at least 2 characters';
         }
         return null;
       },

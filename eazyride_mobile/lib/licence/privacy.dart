@@ -1,5 +1,6 @@
 //import 'package:eazyride_mobile/auth/homepage.dart';
 import 'package:eazyride_mobile/auth/homepage.dart';
+import 'package:eazyride_mobile/components/role.dart';
 //import 'package:eazyride_mobile/auth/passenger/home_map.dart';
 import 'package:eazyride_mobile/theme/hex_color.dart';
 import 'package:flutter/material.dart';
@@ -132,12 +133,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () {
                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => Homepage()));
+                          MaterialPageRoute(builder: (context) => RoleSelectionScreen()));
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text("Forwad",
+                      Text("Forward",
                        style: TextStyle(
                         fontSize: 18.0,
                        ),

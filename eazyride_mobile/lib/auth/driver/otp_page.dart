@@ -4,7 +4,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:eazyride_mobile/transport/home_transport.dart';
 
 class OtpPage extends StatefulWidget {
-  const OtpPage({super.key, required userId, String? email, String? phone});
+  const OtpPage({super.key, required userId, String? email, String? phone, required token});
 
   @override
   State<OtpPage> createState() => _OtpPageState();

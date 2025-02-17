@@ -17,7 +17,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final apiUrl = const String.fromEnvironment('API_URL',
-    defaultValue: 'https://easy-ride-backend-xl8m.onrender.com/api/auth/customer/login');
+    defaultValue: 'https://easy-ride-backend-xl8m.onrender.com/api/auth/driver/login');
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   Country? selectedCountry;
@@ -306,8 +306,8 @@ class _LoginPageState extends State<LoginPage> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleLogin,
         style: ElevatedButton.styleFrom(
-          backgroundColor: HexColor("#EDAE10"),
-          disabledBackgroundColor: HexColor("#EDAE10").withOpacity(0.6),
+          backgroundColor:Color.fromARGB(255, 7, 255, 255),
+          disabledBackgroundColor:Color.fromARGB(255, 7, 255, 255).withOpacity(0.6),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         child: _isLoading
