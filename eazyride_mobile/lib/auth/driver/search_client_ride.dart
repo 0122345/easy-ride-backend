@@ -19,14 +19,14 @@ class RideState extends ChangeNotifier {
 
 enum RideStatus { initial, finding, connecting, driverDetails }
 
-class RideRequestScreen extends StatefulWidget {
-  const RideRequestScreen({Key? key}) : super(key: key);
+class PassengerRequest extends StatefulWidget {
+  const PassengerRequest({Key? key}) : super(key: key);
 
   @override
-  State<RideRequestScreen> createState() => _RideRequestScreenState();
+  State<PassengerRequest> createState() => _PassengerRequestState();
 }
 
-class _RideRequestScreenState extends State<RideRequestScreen> {
+class _PassengerRequestState extends State<PassengerRequest> {
   GoogleMapController? mapController;
   Set<Marker> markers = {};
   
