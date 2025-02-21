@@ -20,7 +20,7 @@ class RideState extends ChangeNotifier {
 enum RideStatus { initial, finding, connecting, driverDetails }
 
 class RideRequestScreen extends StatefulWidget {
-  const RideRequestScreen({Key? key}) : super(key: key);
+  const RideRequestScreen({super.key});
 
   @override
   State<RideRequestScreen> createState() => _RideRequestScreenState();

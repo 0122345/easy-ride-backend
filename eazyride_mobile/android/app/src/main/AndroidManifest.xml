@@ -1,13 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <!-- Request permissions for accessing the internet (required for Google Maps) -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    
     <!-- Permissions to access fine location (more accurate) and coarse location (less accurate) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     
     <!-- Optional: Background location access for Android 10+ -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <application
         android:label="eazyride_mobile"
         android:name="${applicationName}"
@@ -29,9 +30,13 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-              <meta-data
+              <!-- <meta-data
               android:name="com.google.android.geo.API_KEY"
-              android:value="@string/api_key" />
+              android:value="AIzaSyAKeAZhauWaetnps2XAdSwHM790VYIuGqg" /> -->
+              <!-- @string/google_maps_key -->
+              <meta-data
+             android:name="com.mapbox.token"
+             android:value="pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw" />
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

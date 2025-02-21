@@ -1,27 +1,31 @@
-import 'dart:convert';
-import 'dart:async';
-import 'package:eazyride_mobile/auth/homepage.dart';
-import 'package:eazyride_mobile/licence/privacy.dart';
-import 'package:eazyride_mobile/settings/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:eazyride_mobile/theme/hex_color.dart';
+import 'package:eazyride_mobile/auth/homepage.dart';
+import 'package:eazyride_mobile/licence/privacy.dart';
 import 'package:eazyride_mobile/components/drawer.dart';
 import 'package:eazyride_mobile/home/search_screen.dart';
 import 'package:eazyride_mobile/notifications/home.dart';
-//import 'package:eazyride_mobile/transport/ride/request_ride.dart';
-//import 'package:eazyride_mobile/transport/request/driver/ride_request.dart';
 import 'package:eazyride_mobile/transport/request/passenger/ride_request.dart';
-//import 'package:eazyride_mobile/transport/request/passenger/ride_request_screen.dart';
-import 'package:provider/provider.dart';
 
 class HomeDriverWrapper extends StatelessWidget {
-  const HomeDriverWrapper({super.key});
+  final String userId;
+  final String token;
+  final String email;
+
+  const HomeDriverWrapper({
+    required this.userId,
+    required this.token,
+    required this.email,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,27 +45,23 @@ class HomeDriverWrapper extends StatelessWidget {
     );
   }
 }
-
-
 class HomeDriver extends StatefulWidget {
-  const HomeDriver({Key? key}) : super(key: key);
+  const HomeDriver({super.key});
 
   @override
-  _HomeDriverState createState() => _HomeDriverState();
+  State<HomeDriver> createState() => _HomeDriverState();
 }
 
-class _HomeDriverState extends State<HomeDriver> {
-  final pageController = PageController(initialPage: 0);
-  final MyDrawerController controller = Get.find<MyDrawerController>();
+class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
+  late final MyDrawerController drawerController;
   GoogleMapController? mapController;
   Position? _currentPosition;
   final Set<Marker> _markers = {};
-  WebSocketChannel? _webSocket;
-  Timer? _locationTimer;
-  static const double _searchRadius = 100.0;
+  bool _isLoading = true;
+  bool _isMapReady = false;
   int _selectedIndex = 0;
 
-  final List<IconData> _iconList = [
+  final List<IconData> _iconList = const [
     Icons.home,
     Icons.favorite,
     Icons.report,
@@ -69,245 +69,119 @@ class _HomeDriverState extends State<HomeDriver> {
     Icons.person,
   ];
 
-  @override
+   @override
   void initState() {
     super.initState();
-    _initLocationServices();
-    _initWebSocket();
-    _startLocationUpdates();
+    MapboxOptions.setAccessToken('pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw');
+    _initializeLocation();
   }
-
-  Future<void> _initLocationServices() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      mapController?.setMapStyle(null);
     }
-
-    _currentPosition = await Geolocator.getCurrentPosition();
-    _updateMap();
-    _fetchNearbyLocations();
   }
 
-  void _initWebSocket() {
-    _webSocket = WebSocketChannel.connect(
-      Uri.parse('ws://easy-ride-backend-xl8m.onrender.com/locations/ws'),
-    )..stream.listen(_handleLocationUpdate);
+  Future<void> _initializeApp() async {
+    Get.put(MyDrawerController());
+    drawerController = Get.find<MyDrawerController>();
+    await _requestPermissions();
+    await _initLocationServices();
   }
 
-  void _startLocationUpdates() {
-    _locationTimer = Timer.periodic(
-      const Duration(seconds: 3),
-      (_) => _sendLocationUpdate(),
+  Future<void> _requestPermissions() async {
+    await Permission.storage.request();
+    await Permission.location.request();
+  }
+
+   Future<void> _initializeLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high
+      );
+      setState(() {
+        _currentPosition = position;
+        _isLoading = false;
+      });
+    } catch (e) {
+      _showError('Failed to get location');
+    }
+  }
+
+  void _onMapCreated(MapboxMap controller) {
+    mapboxMap = controller;
+    _addCurrentLocationMarker();
+  }
+
+  Future<void> _addCurrentLocationMarker() async {
+    if (_currentPosition == null || mapboxMap == null) return;
+
+    final point = {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [_currentPosition!.longitude, _currentPosition!.latitude],
+      },
+      "properties": {},
+    };
+
+    await mapboxMap!.style.addSource(
+      GeoJsonSource(
+        id: "current-location",
+        data: jsonEncode(point),
+      ),
     );
-  }
 
-  Future<void> _sendLocationUpdate() async {
-    if (_currentPosition == null) return;
-
-    try {
-      await http.post(
-        Uri.parse('https://easy-ride-backend-xl8m.onrender.com/api/location/update'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'latitude': _currentPosition!.latitude,
-          'longitude': _currentPosition!.longitude,
-          'radius': _searchRadius,
-          'timestamp': DateTime.now().toIso8601String(),
-        }),
-      );
-    } catch (e) {
-      print('Location update failed: $e');
-    }
-  }
-
-  Future<void> _fetchNearbyLocations() async {
-    if (_currentPosition == null) return;
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'https://easy-ride-backend-xl8m.onrender.com/api/locations/nearby?lat=${_currentPosition!.latitude}&lng=${_currentPosition!.longitude}&radius=$_searchRadius',
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final locations = jsonDecode(response.body);
-        _updateMarkers(locations);
-      }
-    } catch (e) {
-      print('Failed to fetch nearby locations: $e');
-    }
-  }
-
-  void _handleLocationUpdate(dynamic data) {
-    final locations = jsonDecode(data);
-    _updateMarkers(locations);
-  }
-
-  void _updateMarkers(List<dynamic> locations) {
-    setState(() {
-      _markers.clear();
-
-      if (_currentPosition != null) {
-        _markers.add(Marker(
-          markerId: const MarkerId('current'),
-          position: LatLng(
-            _currentPosition!.latitude,
-            _currentPosition!.longitude,
-          ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueBlue,
-          ),
-          infoWindow: const InfoWindow(title: 'Your Location'),
-        ));
-      }
-
-      for (var loc in locations) {
-        _markers.add(Marker(
-          markerId: MarkerId('loc_${loc['id']}'),
-          position: LatLng(loc['latitude'], loc['longitude']),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueOrange,
-          ),
-          infoWindow: InfoWindow(
-            title: loc['name'],
-            snippet: 'Distance: ${loc['distance']}m',
-          ),
-          onTap: () => _showLocationDetails(loc),
-        ));
-      }
-    });
-  }
-
-  void _updateMap() {
-    if (_currentPosition == null || mapController == null) return;
-
-    mapController!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(
-            _currentPosition!.latitude,
-            _currentPosition!.longitude,
-          ),
-          zoom: 15,
-        ),
+    await mapboxMap!.style.addLayer(
+      CircleLayer(
+        id: "current-location-layer",
+        sourceId: "current-location",
+        circleColor: Colors.blue.value,
+        circleRadius: 8.0,
       ),
     );
   }
 
-  void _showLocationDetails(Map<String, dynamic> location) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Name: ${location['name']}'),
-            Text('Distance: ${location['distance']}m'),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _handleLocationSelect(location);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 7, 255, 255),
-                  ),
-                  child: const Text('Accept'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _handleLocationSelect(Map<String, dynamic> location) {
-    Get.snackbar(
-      'Success',
-      'Location selected: ${location['name']}',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
-  }
-  
-  void _handleNavigation(int index) {
-     final routes = [
-       MaterialPageRoute(builder: (_) => const HomeDriver()),
-       MaterialPageRoute(builder: (_) => const Homepage()),
-       MaterialPageRoute(builder: (_) =>  PrivacyPolicyScreen()),
-       MaterialPageRoute(builder: (_) => const HomeNotifications()),
-       //MaterialPageRoute(builder: (_) => RideRequestScreen()),
-     ];
-
-     if (index >= 0 && index < routes.length) {
-        setState(() => _selectedIndex = index);
-        Navigator.push(context, routes[index]);
-     }
-  }
-
-
-  Widget _buildNavigationBar() {
-    return AnimatedBottomNavigationBar(
-      icons: _iconList,
-      activeIndex: _selectedIndex,
-      gapLocation: GapLocation.end,
-      notchSmoothness: NotchSmoothness.verySmoothEdge,
-      leftCornerRadius: 32,
-      rightCornerRadius: 0,
-      onTap: _handleNavigation,
-      activeColor: Color.fromARGB(255, 7, 255, 255),
-      inactiveColor: const Color.fromARGB(255, 112, 115, 139),
-      backgroundColor: const Color.fromARGB(167, 9, 5, 32),
-      iconSize: 30.0,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        children: [
-          GoogleMap(
-            onMapCreated: (controller) => mapController = controller,
-            initialCameraPosition: CameraPosition(
-              target: _currentPosition != null
-                  ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
-                  : const LatLng(-1.9441, 30.0444),
-              zoom: 15,
+              children: [
+                 MapWidget(
+            key: const ValueKey("mapWidget"),
+            resourceOptions: ResourceOptions(
+              accessToken: MapboxOptions.accessToken,
             ),
-            markers: _markers,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-            compassEnabled: true,
-            mapType: MapType.normal,
-            zoomControlsEnabled: true,
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildNavigationBar(),
-          ),
-          Column(
-            children: [
-              _buildTopBar(context),
-              const Spacer(),
-              _buildBottomBar(context),
-            ],
-          ),
+            styleUri: MapboxStyles.MAPBOX_STREETS,
+            cameraOptions: CameraOptions(
+              center: Point(
+                coordinates: [
+                  _currentPosition?.longitude ?? 30.0444,
+                  _currentPosition?.latitude ?? -1.9441,
+                ],
+              ),
+              zoom: 15.0,
+            ),
+            onMapCreated: _onMapCreated,
+                ),
+                if (_isMapReady) ...[
+                  _buildTopBar(context),
+                  _buildBottomSection(context),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _buildBottomSection(BuildContext context) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildBottomBar(context),
+          _buildNavigationBar(),
         ],
       ),
     );
@@ -320,64 +194,59 @@ class _HomeDriverState extends State<HomeDriver> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              width: 36.0,
-              height: 36.0,
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 7, 255, 255),
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: GetBuilder<MyDrawerController>(
-                builder: (controller) {
-                  return Center(
-                    child: IconButton(
-                      onPressed: () => controller.toggleDrawer(),
-                      icon: Icon(controller.isDrawerOpen
-                          ? Icons.close_rounded
-                          : Icons.menu),
-                      color: Colors.black,
-                    ),
-                  );
-                },
-              ),
-            ),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LocationSearchScreen()),
-                  ),
-                  child: Container(
-                    width: 32.0,
-                    height: 32.0,
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 7, 255, 255),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: const Icon(Icons.search, color: Colors.black),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeNotifications()),
-                  ),
-                  child: Container(
-                    width: 32.0,
-                    height: 32.0,
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 7, 255, 255),
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: const Icon(Icons.notifications, color: Colors.black),
-                  ),
-                ),
-              ],
-            ),
+            _buildMenuButton(),
+            _buildActionButtons(context),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMenuButton() {
+    return Container(
+      width: 36.0,
+      height: 36.0,
+      decoration: BoxDecoration(
+        color: HexColor("#40D2B2"),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: GetBuilder<MyDrawerController>(
+        builder: (controller) => IconButton(
+          onPressed: controller.toggleDrawer,
+          icon: Icon(controller.isDrawerOpen ? Icons.close_rounded : Icons.menu),
+          color: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Row(
+      children: [
+        _buildIconButton(
+          Icons.search,
+          () => Navigator.push(context, MaterialPageRoute(builder: (_) => LocationSearchScreen())),
+        ),
+        const SizedBox(width: 16),
+        _buildIconButton(
+          Icons.notifications,
+          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeNotifications())),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32.0,
+        height: 32.0,
+        decoration: BoxDecoration(
+          color: HexColor("#40D2B2"),
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Icon(icon, color: Colors.black),
       ),
     );
   }
@@ -391,18 +260,18 @@ class _HomeDriverState extends State<HomeDriver> {
           Align(
             alignment: Alignment.bottomLeft,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChangeNotifierProvider.value(
-                      value: RideState(), // pass RideState instance
-                      child: const Homepage(),
-                    ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChangeNotifierProvider.value(
+                    value: RideState(),
+                    child: const Homepage(),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 7, 255, 255)),
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 7, 255, 255),
+              ),
               child: const Text('Request Ride'),
             ),
           ),
@@ -411,11 +280,42 @@ class _HomeDriverState extends State<HomeDriver> {
     );
   }
 
+  Widget _buildNavigationBar() {
+    return AnimatedBottomNavigationBar(
+      icons: _iconList,
+      activeIndex: _selectedIndex,
+      gapLocation: GapLocation.end,
+      notchSmoothness: NotchSmoothness.verySmoothEdge,
+      leftCornerRadius: 32,
+      rightCornerRadius: 32,
+      onTap: _handleNavigation,
+      activeColor: const Color.fromARGB(255, 7, 255, 255),
+      inactiveColor: const Color.fromARGB(255, 112, 115, 139),
+      backgroundColor: HexColor("#40D2B2"),
+      iconSize: 30.0,
+    );
+  }
+
+  void _handleNavigation(int index) {
+    if (!mounted) return;
+
+    final routes = [
+      const HomeDriver(),
+      const Homepage(),
+      PrivacyPolicyScreen(),
+      const HomeNotifications(),
+    ];
+
+    if (index >= 0 && index < routes.length) {
+      setState(() => _selectedIndex = index);
+      Navigator.push(context, MaterialPageRoute(builder: (_) => routes[index]));
+    }
+  }
+
   @override
   void dispose() {
-    pageController.dispose();
-    _locationTimer?.cancel();
-    _webSocket?.sink.close();
+    WidgetsBinding.instance.removeObserver(this);
+    mapController?.dispose();
     super.dispose();
   }
 }

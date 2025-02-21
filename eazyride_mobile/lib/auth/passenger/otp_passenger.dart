@@ -9,10 +9,10 @@ class OtpPage extends StatefulWidget {
   final String phone;
   
   const OtpPage({
-    Key? key, 
+    super.key, 
     required this.userId,
     required this.phone,
-  }) : super(key: key);
+  });
 
   @override
   State<OtpPage> createState() => _OtpPageState();
@@ -56,16 +56,16 @@ class _OtpPageState extends State<OtpPage> {
     );
   }
 
-  void _handleNetworkError(DioError error, ErrorInterceptorHandler handler) {
+  void _handleNetworkError(DioException error, ErrorInterceptorHandler handler) {
     String message;
     switch (error.type) {
-      case DioErrorType.connectionTimeout:
+      case DioExceptionType.connectionTimeout:
         message = 'Connection timeout. Please check your internet connection.';
         break;
-      case DioErrorType.receiveTimeout:
+      case DioExceptionType.receiveTimeout:
         message = 'Server not responding. Please try again.';
         break;
-      case DioErrorType.connectionError:
+      case DioExceptionType.connectionError:
         message = 'No internet connection.';
         break;
       default:

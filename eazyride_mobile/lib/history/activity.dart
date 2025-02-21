@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 const String serverUrl = "https://server.com/activity";
 
 class ActivityScreen extends StatefulWidget {
+  const ActivityScreen({super.key});
+
   @override
   _ActivityScreenState createState() => _ActivityScreenState();
 }
@@ -65,7 +67,7 @@ class RideList extends StatelessWidget {
   final List<Map<String, dynamic>> rides;
   final bool showMap;
 
-  RideList({required this.rides, required this.showMap});
+  const RideList({super.key, required this.rides, required this.showMap});
 
   @override
   Widget build(BuildContext context) {
@@ -87,11 +89,11 @@ class RideList extends StatelessWidget {
 class MapSnapshot extends StatelessWidget {
   final Map<String, dynamic> location;
 
-  MapSnapshot({required this.location});
+  const MapSnapshot({super.key, required this.location});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 100,
       height: 100,
       child: GoogleMap(

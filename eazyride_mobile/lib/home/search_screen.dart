@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 const String serverUrl = "https://your-server.com/save-location";
 
 class LocationSearchScreen extends StatefulWidget {
+  const LocationSearchScreen({super.key});
+
   @override
   _LocationSearchScreenState createState() => _LocationSearchScreenState();
 }

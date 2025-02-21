@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class RideRequestScreen extends StatefulWidget {
+  const RideRequestScreen({super.key});
+
   @override
   _RideRequestScreenState createState() => _RideRequestScreenState();
 }
@@ -102,6 +104,8 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
 }
 
 class RideConfirmationScreen extends StatelessWidget {
+  const RideConfirmationScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,6 +142,8 @@ class RideConfirmationScreen extends StatelessWidget {
 }
 
 class RideConnectingScreen extends StatelessWidget {
+  const RideConnectingScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

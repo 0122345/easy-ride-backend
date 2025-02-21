@@ -1,52 +1,51 @@
+import 'package:dio/dio.dart';
 import 'package:eazyride_mobile/auth/driver/signup.dart';
-import 'package:eazyride_mobile/auth/driver/signup.dart';
+import 'package:eazyride_mobile/auth/passenger/home_map.dart';
+import 'package:eazyride_mobile/auth/driver/home_map.dart';
 import 'package:eazyride_mobile/auth/passenger/sign_up_pas.dart';
-import 'package:eazyride_mobile/transport/request/driver/ride_request.dart';
-import 'package:eazyride_mobile/transport/request/passenger/ride_request.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+ 
+
 
 class RoleSelectionScreen extends StatefulWidget {
+  const RoleSelectionScreen({super.key});
+
   @override
   _RoleSelectionScreenState createState() => _RoleSelectionScreenState();
 }
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool isDriver = false;
   bool isCustomer = false;
+  late final Dio _dio;
 
   @override
   void initState() {
     super.initState();
-    _loadUserRole();
+    _initializeDio();
   }
 
-  Future<void> _loadUserRole() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isDriver = prefs.getBool('isDriver') ?? false;
-    });
-  }
-
-  Future<void> _saveUserRole(bool role) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDriver', role);
-    await _syncUserRole(role);
-  }
-
-  Future<void> _syncUserRole(bool role) async {
-    final response = await http.post(
-      Uri.parse('https://backend.com/api/role'),
+  void _initializeDio() {
+    _dio = Dio(BaseOptions(
+      baseUrl: 'https://easy-ride-backend-xl8m.onrender.com/api',
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'role': role ? 'driver' : 'customer'}),
+    ));
+  }
+
+  Future<void> _saveAuthData(String token, String userId, bool isDriver) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    await prefs.setString('userId', userId);
+    await prefs.setBool('isDriver', isDriver);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
-    if (response.statusCode == 200) {
-      print('Role synced successfully');
-    } else {
-      print('Failed to sync role');
-    }
   }
 
   @override
@@ -87,17 +86,25 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         isDriver = true;
                         isCustomer = false;
                       });
-                      _saveUserRole(true);
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => SignUp()));
+                      _saveAuthData('', '', true);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HomeDriverWrapper(
+                            userId: '',
+                            token: '',
+                            email: '',
+                          ),
+                        ),
+                      );                         
                     } else if (details.primaryDelta! < -10) {
                       setState(() {
                         isDriver = false;
                         isCustomer = true;
                       });
-                         Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => SignUpPassenger()));
-                      _saveUserRole(true);
+                      Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => HomeWrapper()));
+                      _saveAuthData('', '', false);
                     }
                   },
                   child: Container(
@@ -122,7 +129,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                               shape: NeumorphicShape.convex,
                               boxShape: NeumorphicBoxShape.circle(),
                             ),
-                            child: Container(
+                            child: SizedBox(
                               width: 60,
                               height: 60,
                             ),

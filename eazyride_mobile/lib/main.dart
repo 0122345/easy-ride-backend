@@ -1,4 +1,4 @@
-import 'package:eazyride_mobile/auth/driver/search_client_ride.dart';
+import 'package:eazyride_mobile/auth/passenger/search_accept_ride.dart';
 import 'package:eazyride_mobile/components/drawer.dart';
 import 'package:eazyride_mobile/onboarding/entrance.dart';
 import 'package:flutter/material.dart';
@@ -8,13 +8,14 @@ import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 
+
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  
-  await dotenv.load();
+
+  await dotenv.load(fileName: ".env");
   RendererBinding.instance.mouseTracker.dispose();
-  
+
   runApp(
     MultiProvider(
       providers: [
@@ -31,6 +32,7 @@ Future<void> main() async {
 
   FlutterNativeSplash.remove();
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

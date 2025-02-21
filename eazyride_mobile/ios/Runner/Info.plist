@@ -47,6 +47,8 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>MGLMapboxAccessToken</key>
+          <string>pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
           <string>We need your location for Google Maps functionality.</string>
           <key>NSLocationAlwaysUsageDescription</key>

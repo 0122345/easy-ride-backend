@@ -35,7 +35,7 @@ class SelectCarRide extends StatelessWidget {
     ),
   ];
 
-  SelectCarRide({Key? key}) : super(key: key);
+  SelectCarRide({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +124,7 @@ class Car {
 class CarCard extends StatelessWidget {
   final Car car;
 
-  const CarCard({Key? key, required this.car}) : super(key: key);
+  const CarCard({super.key, required this.car});
 
   @override
   Widget build(BuildContext context) {

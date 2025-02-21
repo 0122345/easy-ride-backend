@@ -1,9 +1,9 @@
-import 'package:eazyride_mobile/home/home_map.dart';
+import 'package:eazyride_mobile/auth/driver/home_map.dart';
 import 'package:eazyride_mobile/theme/hex_color.dart';
 import 'package:flutter/material.dart';
 
 class CarDetail extends StatefulWidget {
-  const CarDetail({Key? key}) : super(key: key);
+  const CarDetail({super.key});
 
   @override
   State<CarDetail> createState() => _CarDetailState();
@@ -253,7 +253,7 @@ class _CarDetailState extends State<CarDetail> {
                 OutlinedButton(
                   onPressed: () {
                     Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => HomeWrapper()));
+                        MaterialPageRoute(builder: (context) => HomeDriverWrapper()));
                   },
                   style: OutlinedButton.styleFrom(
                     backgroundColor: HexColor("#EDAE10"),

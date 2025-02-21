@@ -237,7 +237,7 @@ class MenuScreen extends GetView<MyDrawerController> {
             padding: const EdgeInsets.all(10.0),
             child: Row(
               children: [
-                Container(
+                SizedBox(
                   width: 120,
                   height: 45,
                   child: const TextField(

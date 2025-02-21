@@ -3,7 +3,6 @@ import 'package:eazyride_mobile/components/drawer.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:eazyride_mobile/home/search_screen.dart';
 import 'package:eazyride_mobile/notifications/home.dart';
-import 'package:eazyride_mobile/transport/request/driver/ride_request.dart';
 import 'package:eazyride_mobile/transport/request/passenger/ride_request.dart';
 import 'package:eazyride_mobile/transport/ride/request_ride.dart';
 import 'package:flutter/material.dart';

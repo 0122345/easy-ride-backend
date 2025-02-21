@@ -1,11 +1,10 @@
-//import 'package:eazyride_mobile/auth/homepage.dart';
-import 'package:eazyride_mobile/auth/homepage.dart';
-import 'package:eazyride_mobile/components/role.dart';
-//import 'package:eazyride_mobile/auth/passenger/home_map.dart';
+import 'package:eazyride_mobile/components/welcoming_screen.dart';
 import 'package:eazyride_mobile/theme/hex_color.dart';
 import 'package:flutter/material.dart';
  
 class PrivacyPolicyScreen extends StatelessWidget {
+  const PrivacyPolicyScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,7 +132,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () {
                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => RoleSelectionScreen()));
+                          MaterialPageRoute(builder: (context) => WelcomeToOurApp()));
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,

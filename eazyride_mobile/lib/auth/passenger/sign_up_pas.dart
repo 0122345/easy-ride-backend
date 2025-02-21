@@ -1,8 +1,10 @@
-import 'package:eazyride_mobile/auth/driver/otp_page.dart';
+//import 'package:eazyride_mobile/auth/passenger/home_map.dart';
+import 'package:eazyride_mobile/auth/passenger/search_accept_ride.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:dio/dio.dart';
+// import 'package:eazyride_mobile/auth/passenger/login.dart';
 import 'package:eazyride_mobile/theme/hex_color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -41,13 +43,13 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
     selectedCountry = null;
     dio.options.baseUrl = 'https://easy-ride-backend-xl8m.onrender.com/api';
     
-    // Add token interceptor
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        options.headers['Content-Type'] = 'application/json';
         return handler.next(options);
       },
     ));
@@ -61,58 +63,52 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
     _genderController.dispose();
     super.dispose();
   }
+    Future<void> _handleSignUp() async {
+      if (!_formKey.currentState!.validate()) return;
 
-  Future<void> _handleSignUp() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (selectedCountry == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a country')),
-      );
-      return;
-    }
+      setState(() => _isLoading = true);
 
-    setState(() => _isLoading = true);
+      try {
+        final customerData = {
+          'name': _nameController.text,
+          'email': _emailController.text,
+          'phone': '${selectedCountry!.phoneCode}${_phoneController.text}',
+          'password': 'securepassword123'
+        };
 
-    try {
-      final customerData = {
-        'name': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'phone': '${selectedCountry!.phoneCode}${_phoneController.text.trim()}',
-        'gender': _genderController.text,
-        'userType': 'Passenger'
-      };
+        final response = await dio.post('/auth/customer/register', data: customerData);
+    
+        if (response.statusCode == 201) {
+          final token = response.data['token'];
+          final userId = response.data['userId'];
+      
+          await saveToken(token);
+          await saveUserId(userId);
 
-      final response = await dio.post('/auth/customer/register', data: customerData);
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final token = response.data['token'];
-        await saveToken(token);
-
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OtpPage(
-                userId: response.data['userId'],
-                email: customerData['email'],
-                token: token,
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RideRequestScreen(
+                  userId: userId,
+                  token: token,
+                  email: customerData['email']!
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
+      } catch (e) {
+        //_showError('Registration failed');
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Authentication failed: ${e.toString()}')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
-  }
 
-
+    Future<void> saveUserId(String userId) async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_id', userId);
+    }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,7 +140,6 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
                 _buildSocialButtons(),
                 const SizedBox(height: 20),
                 _buildSignInOption(context),
-                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -184,7 +179,6 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
         }
         return null;
       },
-     //TODO: _nameDecorator.clear();
     );
   }
 
@@ -243,8 +237,7 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
               labelText: 'Phone Number',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
@@ -315,10 +308,7 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Align(
-            alignment: Alignment.topLeft,
-            child:
-                const Icon(Icons.check_circle, color: Colors.green, size: 20)),
+        const Icon(Icons.check_circle, color: Colors.green, size: 20),
         const SizedBox(width: 8),
         Flexible(
           child: Text.rich(
@@ -329,13 +319,17 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
                 TextSpan(
                   text: "Terms of service",
                   style: TextStyle(
-                      color: HexColor("#FEC400"), fontWeight: FontWeight.bold),
+                    color: HexColor("#FEC400"),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const TextSpan(text: " and "),
                 TextSpan(
                   text: "Privacy policy",
                   style: TextStyle(
-                      color: HexColor("#FEC400"), fontWeight: FontWeight.bold),
+                    color: HexColor("#FEC400"),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -349,23 +343,12 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
   Widget _buildOrSeparator() {
     return Row(
       children: [
-        Expanded(
-          child: Divider(
-            thickness: 1,
-            color: Colors.grey[300],
-          ),
-        ),
+        Expanded(child: Divider(thickness: 1, color: Colors.grey[300])),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Text("or",
-              style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+          child: Text("or", style: TextStyle(color: Colors.grey[600], fontSize: 14)),
         ),
-        Expanded(
-          child: Divider(
-            thickness: 1,
-            color: Colors.grey[300],
-          ),
-        ),
+        Expanded(child: Divider(thickness: 1, color: Colors.grey[300])),
       ],
     );
   }
@@ -407,7 +390,9 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
     return GestureDetector(
       onTap: () {
         // Navigator.push(
-        //     context, MaterialPageRoute(builder: (context) => LoginPage()));
+        //   context,
+        //   MaterialPageRoute(builder: (context) => LoginPage()),
+        // );
       },
       child: Center(
         child: Text.rich(
@@ -418,7 +403,9 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
               TextSpan(
                 text: "Sign in",
                 style: TextStyle(
-                    color: HexColor("#FEC400"), fontWeight: FontWeight.bold),
+                  color: HexColor("#FEC400"),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -426,7 +413,6 @@ class _SignUpPassengerState extends State<SignUpPassenger> {
       ),
     );
   }
-
   void _showCountryPicker() {
     showCountryPicker(
       context: context,
