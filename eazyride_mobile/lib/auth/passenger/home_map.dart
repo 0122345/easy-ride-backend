@@ -1,4 +1,4 @@
-import 'package:eazyride_mobile/auth/homepage.dart';
+impor  'package:eazyride_mobile/auth/homepage.dart';
 import 'package:eazyride_mobile/components/drawer.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:eazyride_mobile/home/search_screen.dart';
@@ -50,7 +50,7 @@ class _HomeMapState extends State<HomeMap> {
   Position? _currentPosition;  WebSocketChannel? _webSocket;
   Timer? _locationUpdateTimer;
   final Set<String> _driverSourceIds = {};
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   final List<IconData> _iconList = [
     Icons.home,
     Icons.favorite,
@@ -191,9 +191,25 @@ class _HomeMapState extends State<HomeMap> {
         },
         "properties": {
           "name": driver['name'],
-          "rating": driver['rating']
+          "rating": driver['rating'],
+          "vehicle": driver['vehicle'],
+          "distance": driver['distance']
         }
       };
+
+      await mapboxMap!.style.addSource(
+        GeoJsonSource(id: sourceId, data: jsonEncode(point)),
+      );
+
+      await mapboxMap!.style.addLayer(
+        CircleLayer(
+          id: "layer-$sourceId",
+          sourceId: sourceId,
+          circleColor: Colors.green.value,
+          circleRadius: 10.0,
+          circleStrokeWidth: 2.0,
+          circle
+      }
 
       await mapboxMap!.style.addSource(
         GeoJsonSource(id: sourceId, data: jsonEncode(point)),
@@ -319,30 +335,48 @@ class _HomeMapState extends State<HomeMap> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Align(
-            alignment: Alignment.bottomLeft,
+          // Request Ride Button
+          SizedBox(
+            width: double.infinity,
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ChangeNotifierProvider.value(
-                      value: RideState(),
-                      child: const Homepage(),
-                    ),
+                    builder: (context) => const RequestForRentScreen(),
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+              child: const Text(
+                'Request Ride',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
-              child: const Text('Rental', style: TextStyle(color: Colors.white)),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
+
+              child: const Text(
+                'Request Ride',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
               color: Colors.amber.shade100,
@@ -403,7 +437,7 @@ class _HomeMapState extends State<HomeMap> {
           _buildNavigationBar(),
         ],
       ),
-    );
+    )
   }
 
   Widget _buildNavigationBar() {

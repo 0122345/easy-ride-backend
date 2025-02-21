@@ -1,12 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/material.dart';
 
 class RideService {
   final Dio _dio;
   final String baseUrl = 'https://easy-ride-backend-xl8m.onrender.com/api';
-   static const customerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQxZWMyMTFhLWUwMzktNGZhZi05OTFkLTY2N2RlZTA1MGQzNSIsInVzZXJUeXBlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3Mzk1MTc3NzEsImV4cCI6MTc0MjEwOTc3MX0.a3JyMcbOdg1TBAivhVJFO9P8yFt8z_QRpMKEUHPNudw';
-  static const driverToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4YWU5ODM3LTFkMGYtNDAyNC1iMzczLWJjYTNjYTY0NzZhZSIsInVzZXJUeXBlIjoiRFJJVkVSIiwiaWF0IjoxNzM5NTE3Nzk5LCJleHAiOjE3NDIxMDk3OTl9.23rYk_ry_e_WIKhwSy4QW496sDJB_5wYe2Q_24iAfDQ';
+  static const customerToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQxZWMyMTFhLWUwMzktNGZhZi05OTFkLTY2N2RlZTA1MGQzNSIsInVzZXJUeXBlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3Mzk1MTc3NzEsImV4cCI6MTc0MjEwOTc3MX0.a3JyMcbOdg1TBAivhVJFO9P8yFt8z_QRpMKEUHPNudw';
+  static const driverToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4YWU5ODM3LTFkMGYtNDAyNC1iMzczLWJjYTNjYTY0NzZhZSIsInVzZXJUeXBlIjoiRFJJVkVSIiwiaWF0IjoxNzM5NTE3Nzk5LCJleHAiOjE3NDIxMDk3OTl9.23rYk_ry_e_WIKhwSy4QW496sDJB_5wYe2Q_24iAfDQ';
 
   RideService() : _dio = Dio() {
     _initializeDio();
@@ -32,7 +33,8 @@ class RideService {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getNearbyDrivers(double lat, double lon, double radius) async {
+  Future<List<Map<String, dynamic>>> getNearbyDrivers(
+      double lat, double lon, double radius) async {
     try {
       final response = await _dio.get(
         '/rides/nearby',
@@ -49,16 +51,12 @@ class RideService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getNearbyRides(double lat, double lon) async {
+  Future<List<Map<String, dynamic>>> getNearbyRides(
+      double lat, double lon) async {
     try {
       final response = await _dio.get(
         '/rides/nearby',
-        queryParameters: {
-          'lat': lat,
-          'lon': lon,
-          'radius': 40,
-          'type': 'RIDE'
-        },
+        queryParameters: {'lat': lat, 'lon': lon, 'radius': 40, 'type': 'RIDE'},
       );
       return List<Map<String, dynamic>>.from(response.data['rides']);
     } on DioException catch (e) {
@@ -89,7 +87,8 @@ class RideService {
       case DioExceptionType.connectionError:
         return Exception('No internet connection');
       default:
-        return Exception(e.response?.data['message'] ?? 'Network error occurred');
+        return Exception(
+            e.response?.data['message'] ?? 'Network error occurred');
     }
   }
 }

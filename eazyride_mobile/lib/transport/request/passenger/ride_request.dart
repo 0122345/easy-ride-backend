@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import 'dart:async';
 
 class RideState extends ChangeNotifier {
   String driverName = 'David Jones';
@@ -29,7 +28,7 @@ class RideRequestScreen extends StatefulWidget {
 class _RideRequestScreenState extends State<RideRequestScreen> {
   GoogleMapController? mapController;
   Set<Marker> markers = {};
-  
+
   @override
   Widget build(BuildContext context) {
     final rideState = context.watch<RideState>();
@@ -113,7 +112,10 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
     return _driverInfoCard(rideState);
   }
 
-  Widget _rideStatusCard({required String title, required bool showProgressBar, required RideState rideState}) {
+  Widget _rideStatusCard(
+      {required String title,
+      required bool showProgressBar,
+      required RideState rideState}) {
     return Center(
       child: Container(
         width: MediaQuery.of(context).size.width * 0.9,

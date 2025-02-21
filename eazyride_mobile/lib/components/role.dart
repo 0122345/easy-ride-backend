@@ -1,12 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:eazyride_mobile/auth/driver/signup.dart';
 import 'package:eazyride_mobile/auth/passenger/home_map.dart';
 import 'package:eazyride_mobile/auth/driver/home_map.dart';
-import 'package:eazyride_mobile/auth/passenger/sign_up_pas.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:shared_preferences/shared_preferences.dart';
- 
-
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -96,14 +92,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             email: '',
                           ),
                         ),
-                      );                         
+                      );
                     } else if (details.primaryDelta! < -10) {
                       setState(() {
                         isDriver = false;
                         isCustomer = true;
                       });
-                      Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => HomeWrapper()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => HomeWrapper()));
                       _saveAuthData('', '', false);
                     }
                   },
@@ -120,9 +118,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           duration: Duration(milliseconds: 300),
                           alignment: isDriver
                               ? Alignment.centerRight
-                              : isCustomer 
-                                 ? Alignment.centerLeft
-                                 :Alignment.center,
+                              : isCustomer
+                                  ? Alignment.centerLeft
+                                  : Alignment.center,
                           child: Neumorphic(
                             style: NeumorphicStyle(
                               color: Colors.yellow,

@@ -45,6 +45,7 @@ class HomeDriverWrapper extends StatelessWidget {
     );
   }
 }
+
 class HomeDriver extends StatefulWidget {
   const HomeDriver({super.key});
 
@@ -58,7 +59,7 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
   Position? _currentPosition;
   final Set<Marker> _markers = {};
   bool _isLoading = true;
-  bool _isMapReady = false;
+  final bool _isMapReady = false;
   int _selectedIndex = 0;
 
   final List<IconData> _iconList = const [
@@ -69,12 +70,14 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
     Icons.person,
   ];
 
-   @override
+  @override
   void initState() {
     super.initState();
-    MapboxOptions.setAccessToken('pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw');
+    MapboxOptions.setAccessToken(
+        'pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw');
     _initializeLocation();
   }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -94,11 +97,10 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
     await Permission.location.request();
   }
 
-   Future<void> _initializeLocation() async {
+  Future<void> _initializeLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high
-      );
+          desiredAccuracy: LocationAccuracy.high);
       setState(() {
         _currentPosition = position;
         _isLoading = false;
@@ -120,7 +122,10 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
       "type": "Feature",
       "geometry": {
         "type": "Point",
-        "coordinates": [_currentPosition!.longitude, _currentPosition!.latitude],
+        "coordinates": [
+          _currentPosition!.longitude,
+          _currentPosition!.latitude
+        ],
       },
       "properties": {},
     };
@@ -142,13 +147,12 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-              children: [
-                 MapWidget(
+        children: [
+          MapWidget(
             key: const ValueKey("mapWidget"),
             resourceOptions: ResourceOptions(
               accessToken: MapboxOptions.accessToken,
@@ -164,13 +168,13 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
               zoom: 15.0,
             ),
             onMapCreated: _onMapCreated,
-                ),
-                if (_isMapReady) ...[
-                  _buildTopBar(context),
-                  _buildBottomSection(context),
-                ],
-              ],
-            ),
+          ),
+          if (_isMapReady) ...[
+            _buildTopBar(context),
+            _buildBottomSection(context),
+          ],
+        ],
+      ),
     );
   }
 
@@ -213,7 +217,8 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
       child: GetBuilder<MyDrawerController>(
         builder: (controller) => IconButton(
           onPressed: controller.toggleDrawer,
-          icon: Icon(controller.isDrawerOpen ? Icons.close_rounded : Icons.menu),
+          icon:
+              Icon(controller.isDrawerOpen ? Icons.close_rounded : Icons.menu),
           color: Colors.black,
         ),
       ),
@@ -225,12 +230,14 @@ class _HomeDriverState extends State<HomeDriver> with WidgetsBindingObserver {
       children: [
         _buildIconButton(
           Icons.search,
-          () => Navigator.push(context, MaterialPageRoute(builder: (_) => LocationSearchScreen())),
+          () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => LocationSearchScreen())),
         ),
         const SizedBox(width: 16),
         _buildIconButton(
           Icons.notifications,
-          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeNotifications())),
+          () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const HomeNotifications())),
         ),
       ],
     );

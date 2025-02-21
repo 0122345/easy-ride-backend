@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:dio/dio.dart';
@@ -32,7 +31,8 @@ class _PassengerRequestScreenState extends State<PassengerRequestScreen> {
   void initState() {
     super.initState();
     _initializeDio();
-    MapboxOptions.setAccessToken('pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw');
+    MapboxOptions.setAccessToken(
+        'pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw');
     _startRideUpdates();
   }
 
@@ -56,10 +56,9 @@ class _PassengerRequestScreenState extends State<PassengerRequestScreen> {
 
   Future<void> _fetchNearbyRides() async {
     try {
-      final response = await _dio.get('/rides/nearby', 
-        queryParameters: {'lat': -1.9403, 'lon': 30.0619, 'radius': 40}
-      );
-      
+      final response = await _dio.get('/rides/nearby',
+          queryParameters: {'lat': -1.9403, 'lon': 30.0619, 'radius': 40});
+
       if (response.statusCode == 200) {
         setState(() {
           nearbyRides = List<Map<String, dynamic>>.from(response.data['rides']);
@@ -97,7 +96,10 @@ class _PassengerRequestScreenState extends State<PassengerRequestScreen> {
         "type": "Feature",
         "geometry": {
           "type": "Point",
-          "coordinates": [ride['pickupLocation']['lon'], ride['pickupLocation']['lat']],
+          "coordinates": [
+            ride['pickupLocation']['lon'],
+            ride['pickupLocation']['lat']
+          ],
         },
         "properties": {"id": ride['id'], "price": ride['price']}
       };
@@ -205,7 +207,8 @@ class _PassengerRequestScreenState extends State<PassengerRequestScreen> {
                       onPressed: () => _acceptRide(ride['id']),
                       style: NeumorphicStyle(
                         color: Colors.green,
-                        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(8)),
                       ),
                       child: const Text(
                         'Accept',
@@ -230,8 +233,8 @@ class _PassengerRequestScreenState extends State<PassengerRequestScreen> {
           MapWidget(
             key: const ValueKey("mapWidget"),
             resourceOptions: ResourceOptions(
-              accessToken: 'pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw'
-            ),
+                accessToken:
+                    'pk.eyJ1IjoibnR3YXJpZmlhY3JlIiwiYSI6ImNtN2UzZjBpbDA1NWMybXM3NDc3bGJlOGYifQ.AXM-Vk9Vq7mzYyoQH5AnMw'),
             styleUri: MapboxStyles.MAPBOX_STREETS,
             cameraOptions: CameraOptions(
               center: Point(coordinates: Position(30.0619, -1.9403)),
@@ -246,7 +249,8 @@ class _PassengerRequestScreenState extends State<PassengerRequestScreen> {
             builder: (context, scrollController) => Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -260,7 +264,8 @@ class _PassengerRequestScreenState extends State<PassengerRequestScreen> {
                   : ListView.builder(
                       controller: scrollController,
                       itemCount: nearbyRides.length,
-                      itemBuilder: (context, index) => _buildRideRequestCard(nearbyRides[index]),
+                      itemBuilder: (context, index) =>
+                          _buildRideRequestCard(nearbyRides[index]),
                     ),
             ),
           ),

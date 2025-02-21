@@ -1,4 +1,3 @@
-import 'package:eazyride_mobile/auth/driver/login_rider.dart';
 import 'package:eazyride_mobile/auth/driver/home_map.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
@@ -24,16 +23,16 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _licenceController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
-  
-  get token => "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4YWU5ODM3LTFkMGYtNDAyNC1iMzczLWJjYTNjYTY0NzZhZSIsInVzZXJUeXBlIjoiRFJJVkVSIiwiaWF0IjoxNzM5NTE3Nzk5LCJleHAiOjE3NDIxMDk3OTl9.23rYk_ry_e_WIKhwSy4QW496sDJB_5wYe2Q_24iAfDQ";
+
+  get token =>
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4YWU5ODM3LTFkMGYtNDAyNC1iMzczLWJjYTNjYTY0NzZhZSIsInVzZXJUeXBlIjoiRFJJVkVSIiwiaWF0IjoxNzM5NTE3Nzk5LCJleHAiOjE3NDIxMDk3OTl9.23rYk_ry_e_WIKhwSy4QW496sDJB_5wYe2Q_24iAfDQ";
   //final TextEditingController _passwordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     selectedCountry = null;
-    dio.options.baseUrl =
-        'https://easy-ride-backend-xl8m.onrender.com/api';
+    dio.options.baseUrl = 'https://easy-ride-backend-xl8m.onrender.com/api';
   }
 
   @override
@@ -45,8 +44,8 @@ class _SignUpState extends State<SignUp> {
     _genderController.dispose();
     super.dispose();
   }
- 
- Future<void> _handleSignUp() async {
+
+  Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedCountry == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -67,17 +66,14 @@ class _SignUpState extends State<SignUp> {
         'userType': 'DRIVER'
       };
 
-          
-         
-          final response = await dio.post('/auth/driver/register', 
-            data: {
-              'name': _nameController.text.trim(),
-              'email': _emailController.text.trim(),
-              'phone': '${selectedCountry!.phoneCode}${_phoneController.text.trim()}',
-              'gender': _genderController.text,
-              'licenseNumber': _licenceController.text,   
-              'password': 'securepassword123'   
-            });
+      final response = await dio.post('/auth/driver/register', data: {
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phone': '${selectedCountry!.phoneCode}${_phoneController.text.trim()}',
+        'gender': _genderController.text,
+        'licenseNumber': _licenceController.text,
+        'password': 'securepassword123'
+      });
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (mounted) {
@@ -174,14 +170,14 @@ class _SignUpState extends State<SignUp> {
         }
         if (value.trim().length < 2) {
           return 'Name must be at least 2 characters';
-         }
+        }
         return null;
       },
-     //TODO: _nameDecorator.clear();
+      //TODO: _nameDecorator.clear();
     );
   }
 
-   Widget  _buildLicenceField() {
+  Widget _buildLicenceField() {
     return TextFormField(
       controller: _licenceController,
       decoration: InputDecoration(
@@ -197,7 +193,7 @@ class _SignUpState extends State<SignUp> {
         }
         return null;
       },
-     //TODO: _nameDecorator.clear();
+      //TODO: _nameDecorator.clear();
     );
   }
 
