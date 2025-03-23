@@ -1,0 +1,60 @@
+@baseUrl = http://localhost:3000/api
+
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjMzMzNiNjc0LTAxOTctNDM4MC05NTczLTcwNWI0Njk4YTgwYyIsInVzZXJUeXBlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NDIyOTk0MDgsImV4cCI6MTc0NDg5MTQwOH0.9OHFJquXh4BNK5fDa-T9cPFv7GlKCu6HcWXB7rojuZg
+
+@driverToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNhYmI0ZWU2LTYyZGMtNGZkOS1hZTEwLTMyZmQzNjA4ZjhiMiIsInVzZXJUeXBlIjoiRFJJVkVSIiwiaWF0IjoxNzQyMjk5NDUyLCJleHAiOjE3NDQ4OTE0NTJ9.gXX5Ckox-LU9-YkVQuP1GmWcT9_c7PJXE2JvBxnzjps
+
+@customerId = 3333b674-0197-4380-9573-705b4698a80c
+
+@driverId = cabb4ee6-62dc-4fd9-ae10-32fd3608f8b2
+
+
+@chatRoomId = d1e1b011-4162-4e78-9c29-b8a45782059e
+
+@messageId =
+
+
+
+
+### Create chat room (Customer initiates)
+POST {{baseUrl}}/chat/room HTTP/1.1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "customerId": "{{customerId}}",
+  "driverId": "{{driverId}}"
+}
+
+### Send a message (Customer sends a message)
+POST {{baseUrl}}/chat/message HTTP/1.1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "chatRoomId": "{{chatRoomId}}", 
+  "senderId": "{{customerId}}",
+  "content": "Hello, this is a message from the customer!"
+}
+
+### Send a message (Driver sends a message)
+POST {{baseUrl}}/chat/message HTTP/1.1
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "chatRoomId": "{{chatRoomId}}",
+  "senderId": "{{driverId}}",
+  "content": "Hello, this is a message from the driver!"
+}
+
+
+### Fetch messages in a chat room (Customer fetches messages)
+GET {{baseUrl}}/chat/messages/{{chatRoomId}} HTTP/1.1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+### Fetch messages with pagination (Customer fetches messages)
+GET {{baseUrl}}/chat/messages/{{chatRoomId}}?page=1&limit=10 HTTP/1.1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json

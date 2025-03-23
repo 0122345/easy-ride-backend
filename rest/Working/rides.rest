@@ -1,0 +1,83 @@
+@baseUrl = http://localhost:3000/api
+
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjMzMzNiNjc0LTAxOTctNDM4MC05NTczLTcwNWI0Njk4YTgwYyIsInVzZXJUeXBlIjoiQ1VTVE9NRVIiLCJpYXQiOjE3NDIzMzA0MzUsImV4cCI6MTc0NDkyMjQzNX0.dB4YAKY0oETxWocDCRSIKUf8FXuQpTNHNf5NnEZ2ni4
+
+@driverToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNhYmI0ZWU2LTYyZGMtNGZkOS1hZTEwLTMyZmQzNjA4ZjhiMiIsInVzZXJUeXBlIjoiRFJJVkVSIiwiaWF0IjoxNzQyMzMwNDYwLCJleHAiOjE3NDQ5MjI0NjB9.-tFPH2qtPxSTadfYEGCVHMhNfjLb6mwJRRyDobeugwI
+
+@customerId = 3333b674-0197-4380-9573-705b4698a80c
+
+@driverId = cabb4ee6-62dc-4fd9-ae10-32fd3608f8b2
+
+@vehicleId = 60610470-7be6-4127-bb3e-462657905fbe
+
+@rideId = 
+
+@tripId =
+
+@previousRideId = 
+
+### Ride Routes ###
+
+### Create Ride Request
+POST {{baseUrl}}/rides/request
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+    "customerId": "{{customerId}}",
+    "pickupLocation": {
+        "lat": -2.00116,
+        "lon": 30.14428,
+        "address": "X4XV+RWV, Kigali "
+    },
+    "dropoffLocation": {
+        "lat": -1.94441,
+        "lon": 30.09065,
+        "address": "KG 563 St, Kigali"
+    }
+}
+
+### Accept Ride
+PUT {{baseUrl}}/rides/accept
+Content-Type: application/json
+Authorization: Bearer {{driverToken}}
+
+{
+  "rideId": "{{rideId}}",
+  "driverId": "{{driverId}}"
+}
+
+### Complete Ride
+PUT {{baseUrl}}/rides/complete
+Content-Type: application/json
+Authorization: Bearer {{driverToken}}
+
+{
+  "rideId": "{{rideId}}",
+  "finalAmount": 1105.456464858334
+}
+
+### Cancel Ride
+PUT {{baseUrl}}/rides/cancel
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+  "tripId":"{{tripId}}",
+  "canceledByType": "CUSTOMER",
+  "canceledById": "{{customerId}}",
+  "reason": "Customer changed their plans"
+}
+
+### Get Nearby Rides
+GET {{baseUrl}}/rides/nearby?lat=-1.9403&lon=30.0619&radius=40
+Authorization: Bearer {{driverToken}}
+
+### Reorder Ride
+POST {{baseUrl}}/rides/reorder
+Content-Type: application/json
+Authorization: Bearer {{customerToken}}
+
+{
+  "previousRideId": "{{previousRideId}}"
+}
